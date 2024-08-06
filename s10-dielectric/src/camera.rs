@@ -8,6 +8,12 @@ pub struct Camera {
     vertical: Vec3,
 }
 
+impl Default for Camera {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Camera {
     pub fn new() -> Self {
         let aspect_ratio = 16.0 / 9.0;

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::ray::Ray;
-use crate::sphere::Sphere;
+
 use crate::vec3::{dot, Point3, Vec3};
 
 pub struct HitRecord {

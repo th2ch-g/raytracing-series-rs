@@ -1,12 +1,12 @@
-use s9_metal::{
+use s10_dielectric::{
     camera::Camera,
     color::write_color,
-    hittable::{HitRecord, Hittable, Shape},
-    material::{Lambertian, Metal},
+    hittable::{HitRecord, Hittable},
+    material::{Dielectric, Lambertian, Metal},
     ray::Ray,
     sphere::Sphere,
     util::random_f64,
-    vec3::{dot, unit_vector, Color, Point3, Vec3},
+    vec3::{unit_vector, Color, Point3, Vec3},
 };
 use std::io::{self, Write};
 use std::{fs::File, rc::Rc};
@@ -46,12 +46,12 @@ fn ray_color(r: Ray, world: &Vec<Hittable>, depth: i32) -> Color {
         temp_rec.material = Rc::clone(&hittable.material);
         if hittable.shape.hit(r, 0.001, closest_so_far, &mut temp_rec) {
             hit_anything = true;
-            closest_so_far = temp_rec.t.clone();
-            rec.p = temp_rec.p.clone();
-            rec.normal = temp_rec.normal.clone();
+            closest_so_far = temp_rec.t;
+            rec.p = temp_rec.p;
+            rec.normal = temp_rec.normal;
             rec.material = Rc::clone(&temp_rec.material);
-            rec.t = temp_rec.t.clone();
-            rec.front_face = temp_rec.front_face.clone();
+            rec.t = temp_rec.t;
+            rec.front_face = temp_rec.front_face;
         }
     }
 
@@ -73,23 +73,33 @@ fn ray_color(r: Ray, world: &Vec<Hittable>, depth: i32) -> Color {
 fn main() -> io::Result<()> {
     let mut out_str = format!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
+    let material_ground = Hittable::new(
+        Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0),
+        Lambertian::new(Vec3::new(0.8, 0.8, 0.0)),
+    );
+    let material_center = Hittable::new(
+        Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5),
+        Lambertian::new(Vec3::new(0.1, 0.2, 0.5)),
+    );
+    let material_left = Hittable::new(
+        Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5),
+        Dielectric::new(1.5),
+    );
+    let material_left_inside = Hittable::new(
+        Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4),
+        Dielectric::new(1.5),
+    );
+    let material_right = Hittable::new(
+        Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5),
+        Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.0),
+    );
+
     let world = vec![
-        Hittable::new(
-            Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5),
-            Lambertian::new(Vec3::new(0.8, 0.3, 0.3)),
-        ),
-        Hittable::new(
-            Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0),
-            Lambertian::new(Vec3::new(0.8, 0.8, 0.0)),
-        ),
-        Hittable::new(
-            Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5),
-            Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.0),
-        ),
-        Hittable::new(
-            Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5),
-            Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.2),
-        ),
+        material_ground,
+        material_center,
+        material_left,
+        material_left_inside,
+        material_right,
     ];
 
     let cam = Camera::new();

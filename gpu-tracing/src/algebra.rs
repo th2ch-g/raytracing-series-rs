@@ -48,19 +48,15 @@ impl Vec3 {
     }
 
     pub fn dot(&self, rhs: &Vec3) -> f32 {
-        self.x() * rhs.x() +
-        self.y() * rhs.y() +
-        self.z() * rhs.z()
+        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
     }
 
     pub fn cross(&self, rhs: &Vec3) -> Self {
-        Vec3(
-            [
+        Vec3([
             self.y() * rhs.z() - self.z() * rhs.y(),
             self.z() * rhs.x() - self.x() * rhs.z(),
             self.x() * rhs.y() - self.y() * rhs.x(),
-            ]
-        )
+        ])
     }
 
     pub fn norm(&self) -> Vec3 {
@@ -115,7 +111,6 @@ impl_binary_op!(Add: add => (lhs: Vec3, rhs: Vec3) -> Vec3 {
          lhs.z() + rhs.z(),
     ])
 });
-
 
 impl_binary_op!(Sub: sub => (lhs: Vec3, rhs: Vec3) -> Vec3 {
     Vec3([

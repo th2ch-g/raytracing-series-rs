@@ -34,7 +34,7 @@ impl Camera {
                 _pad2: 0,
                 w,
                 _pad3: 0,
-            }
+            },
         }
     }
 

@@ -1,5 +1,5 @@
-use bytemuck::{Pod, Zeroable};
 use crate::camera::{Camera, CameraUniforms};
+use bytemuck::{Pod, Zeroable};
 
 pub struct PathTracer {
     device: wgpu::Device,
@@ -21,12 +21,7 @@ struct Uniforms {
 }
 
 impl PathTracer {
-    pub fn new(
-        device: wgpu::Device,
-        queue: wgpu::Queue,
-        width: u32,
-        height: u32,
-    ) -> Self {
+    pub fn new(device: wgpu::Device, queue: wgpu::Queue, width: u32, height: u32) -> Self {
         device.on_uncaptured_error(Box::new(|error| {
             panic!("Aborting due to an error: {}", error);
         }));
@@ -38,46 +33,45 @@ impl PathTracer {
             //         include_str!("shaders.wgsl")
             //     )
             // ),
-            source: wgpu::ShaderSource::Wgsl(
-                include_str!("shaders.wgsl").into()
-            ),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders.wgsl").into()),
         });
         let (display_pipeline, display_layout) = {
-            let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: None,
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
+            let bind_group_layout =
+                device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: None,
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
                         },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Texture {
+                                sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                                multisampled: false,
+                            },
+                            count: None,
                         },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::StorageTexture {
-                            access: wgpu::StorageTextureAccess::WriteOnly,
-                            format: wgpu::TextureFormat::Rgba32Float,
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::WriteOnly,
+                                format: wgpu::TextureFormat::Rgba32Float,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
                         },
-                        count: None,
-                    },
-                ],
-            });
+                    ],
+                });
 
             let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("display"),
@@ -175,7 +169,6 @@ impl PathTracer {
                         },
                     ],
                 }),
-
                 device.create_bind_group(&wgpu::BindGroupDescriptor {
                     label: None,
                     layout: &display_layout,
@@ -218,13 +211,14 @@ impl PathTracer {
     pub fn render_frame(&mut self, camera: &Camera, target: &wgpu::TextureView) {
         self.uniforms.camera = *camera.uniforms();
         self.uniforms.frame_count += 1;
-        self.queue.write_buffer(&self.uniforms_buffer, 0, bytemuck::bytes_of(&self.uniforms));
+        self.queue
+            .write_buffer(&self.uniforms_buffer, 0, bytemuck::bytes_of(&self.uniforms));
 
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("render frame"),
-        });
+                label: Some("render frame"),
+            });
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("display pass"),
@@ -254,5 +248,3 @@ impl PathTracer {
         self.queue.submit(Some(command_buffer));
     }
 }
-
-

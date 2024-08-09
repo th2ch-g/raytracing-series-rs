@@ -1,14 +1,14 @@
 mod algebra;
-mod render;
 mod camera;
+mod render;
 
+use crate::{algebra::Vec3, camera::Camera};
 use anyhow::{Context, Result};
 use winit::{
     event::{Event, MouseScrollDelta, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::{WindowBuilder},
 };
-use crate::{algebra::Vec3, camera::Camera};
 
 const WIDTH: u32 = 1600;
 const HEIGHT: u32 = 1200;
@@ -27,13 +27,14 @@ async fn main() -> Result<()> {
     use wgpu::TextureFormat::{Bgra8Unorm, Rgba8Unorm};
     let instance = wgpu::Instance::default();
     let surface = instance.create_surface(&window)?;
-    let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
-        force_fallback_adapter: false,
-        compatible_surface: Some(&surface),
-    })
-    .await
-    .context("failed to find a compatible adapter")?;
+    let adapter = instance
+        .request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
+            compatible_surface: Some(&surface),
+        })
+        .await
+        .context("failed to find a compatible adapter")?;
 
     let (device, queue) = adapter
         .request_device(&wgpu::DeviceDescriptor::default(), None)

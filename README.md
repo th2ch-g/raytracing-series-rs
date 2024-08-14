@@ -6,3 +6,5 @@
 - code:
   - [4] weekend: https://github.com/Qman11010101/weekend_raytracing_rust
   - [5] gpu-tracing: https://github.com/RayTracing/gpu-tracing
+  - [6] nextweek: https://github.com/fralken/ray-tracing-the-next-week
+  - [7] rest_of_life: https://github.com/fralken/ray-tracing-the-rest-of-your-life

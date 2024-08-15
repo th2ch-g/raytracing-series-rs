@@ -9,7 +9,7 @@ fn random_in_unit_sphere() -> Vector3<f32> {
     let unit = Vector3::new(1.0, 1.0, 1.0);
     loop {
         let p = 2.0 * Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>()) - unit;
-        if p.magnitude_squared() < 1. {
+        if p.magnitude_squared() < 1.0 {
             return p;
         }
     }
@@ -23,7 +23,7 @@ fn refract(v: &Vector3<f32>, n: &Vector3<f32>, ni_over_nt: f32) -> Option<Vector
     let uv = v.normalize();
     let dt = uv.dot(n);
     let discriminant = 1.0 - ni_over_nt.powi(2) * (1.0 - dt.powi(2));
-    if discriminant > 0. {
+    if discriminant > 0.0 {
         let refracted = ni_over_nt * (uv - n * dt) - n * discriminant.sqrt();
         Some(refracted)
     } else {
@@ -31,13 +31,14 @@ fn refract(v: &Vector3<f32>, n: &Vector3<f32>, ni_over_nt: f32) -> Option<Vector
     }
 }
 
-fn schlick(consine: f32, ref_idx: f32) -> f32 {
+fn schlick(cosine: f32, ref_idx: f32) -> f32 {
     let r0 = ((1.0 - ref_idx) / (1.0 + ref_idx)).powi(2);
-    r0 + (1.0 - r0) * (1.0 - consine).powi(5)
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
 pub trait Material: Sync {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)>;
+
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
 }
 
@@ -72,7 +73,7 @@ pub struct Metal {
 
 impl Metal {
     pub fn new(albedo: Vector3<f32>, fuzz: f32) -> Self {
-        Self {
+        Metal {
             albedo,
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
         }
@@ -83,8 +84,8 @@ impl Material for Metal {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> {
         let mut reflected = reflect(&ray.direction().normalize(), &hit.normal);
         if self.fuzz > 0.0 {
-            reflected += self.fuzz * random_in_unit_sphere();
-        }
+            reflected += self.fuzz * random_in_unit_sphere()
+        };
         if reflected.dot(&hit.normal) > 0.0 {
             let scattered = Ray::new(hit.p, reflected, ray.time());
             Some((scattered, self.albedo))
@@ -105,7 +106,7 @@ pub struct Dielectric {
 
 impl Dielectric {
     pub fn new(ref_idx: f32) -> Self {
-        Self { ref_idx }
+        Dielectric { ref_idx }
     }
 }
 
@@ -144,7 +145,7 @@ pub struct DiffuseLight<T: Texture> {
 
 impl<T: Texture> DiffuseLight<T> {
     pub fn new(emit: T) -> Self {
-        Self { emit }
+        DiffuseLight { emit }
     }
 }
 
@@ -152,6 +153,7 @@ impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, _ray: &Ray, _hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> {
         None
     }
+
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
         self.emit.value(u, v, p)
     }
@@ -164,7 +166,7 @@ pub struct Isotropic<T: Texture> {
 
 impl<T: Texture> Isotropic<T> {
     pub fn new(albedo: T) -> Self {
-        Self { albedo }
+        Isotropic { albedo }
     }
 }
 

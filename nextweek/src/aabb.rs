@@ -24,7 +24,7 @@ pub struct AABB {
 
 impl AABB {
     pub fn new(min: Vector3<f32>, max: Vector3<f32>) -> Self {
-        Self { min, max }
+        AABB { min, max }
     }
 
     pub fn hit(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> bool {
@@ -32,7 +32,7 @@ impl AABB {
             let inv_d = 1.0 / ray.direction()[a];
             let t0 = (self.min[a] - ray.origin()[a]) * inv_d;
             let t1 = (self.max[a] - ray.origin()[a]) * inv_d;
-            let (t0, t1) = if inv_d < 0. { (t1, t0) } else { (t0, t1) };
+            let (t0, t1) = if inv_d < 0.0 { (t1, t0) } else { (t0, t1) };
             t_min = t_min.max(t0);
             t_max = t_max.min(t1);
             if t_max <= t_min {

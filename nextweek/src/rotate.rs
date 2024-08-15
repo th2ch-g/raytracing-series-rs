@@ -4,6 +4,7 @@ use crate::ray::Ray;
 use nalgebra::Vector3;
 use std::f32;
 
+#[allow(dead_code)]
 pub enum Axis {
     X,
     Y,
@@ -70,7 +71,7 @@ impl<H: Hittable> Rotate<H> {
             b.max = max;
             b
         });
-        Self {
+        Rotate {
             axis,
             sin_theta,
             cos_theta,

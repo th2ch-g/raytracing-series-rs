@@ -22,7 +22,7 @@ pub struct AARect<M: Material> {
 
 impl<M: Material> AARect<M> {
     pub fn new(plane: Plane, a0: f32, a1: f32, b0: f32, b1: f32, k: f32, material: M) -> Self {
-        Self {
+        AARect {
             plane,
             a0,
             a1,
@@ -52,7 +52,7 @@ impl<M: Material> Hittable for AARect<M> {
             } else {
                 let u = (a - self.a0) / (self.a1 - self.a0);
                 let v = (b - self.b0) / (self.b1 - self.b0);
-                let p = ray.at(t);
+                let p = ray.point_at_parameter(t);
                 let mut normal = Vector3::zeros();
                 normal[k_axis] = 1.0;
                 Some(HitRecord {

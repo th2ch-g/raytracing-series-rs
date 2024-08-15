@@ -44,7 +44,7 @@ impl Camera {
         let w = (look_from - look_at).normalize();
         let u = view_up.cross(&w).normalize();
         let v = w.cross(&u);
-        Self {
+        Camera {
             origin: look_from,
             lower_left_corner: look_from - half_width * u - half_height * v - focus_dist * w,
             horizontal: 2.0 * half_width * u,
@@ -58,7 +58,7 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f32, t: f32) -> Ray {
-        let origin = if self.lens_radius == 0. {
+        let origin = if self.lens_radius == 0.0 {
             self.origin
         } else {
             let rd = self.lens_radius * random_in_unit_disk();

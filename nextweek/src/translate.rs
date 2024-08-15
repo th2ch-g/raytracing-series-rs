@@ -10,7 +10,7 @@ pub struct Translate<H: Hittable> {
 
 impl<H: Hittable> Translate<H> {
     pub fn new(hittable: H, offset: Vector3<f32>) -> Self {
-        Self { hittable, offset }
+        Translate { hittable, offset }
     }
 }
 

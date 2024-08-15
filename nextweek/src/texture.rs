@@ -12,7 +12,7 @@ pub struct ConstantTexture {
 
 impl ConstantTexture {
     pub fn new(r: f32, g: f32, b: f32) -> Self {
-        Self {
+        ConstantTexture {
             color: Vector3::new(r, g, b),
         }
     }
@@ -31,8 +31,9 @@ pub struct CheckerTexture<T: Texture, U: Texture> {
 }
 
 impl<T: Texture, U: Texture> CheckerTexture<T, U> {
+    #[allow(dead_code)]
     pub fn new(odd: T, even: U) -> Self {
-        Self { odd, even }
+        CheckerTexture { odd, even }
     }
 }
 
@@ -55,7 +56,7 @@ pub struct NoiseTexture {
 
 impl NoiseTexture {
     pub fn new(scale: f32) -> Self {
-        Self {
+        NoiseTexture {
             noise: Perlin::new(),
             scale,
         }
@@ -79,7 +80,7 @@ pub struct ImageTexture {
 
 impl ImageTexture {
     pub fn new(data: Vec<u8>, nx: u32, ny: u32) -> Self {
-        Self { data, nx, ny }
+        ImageTexture { data, nx, ny }
     }
 }
 
@@ -90,10 +91,10 @@ impl Texture for ImageTexture {
         let mut i = (u * nx as f32) as usize;
         let mut j = ((1.0 - v) * ny as f32) as usize;
         if i > nx - 1 {
-            i = nx - 1;
+            i = nx - 1
         }
         if j > ny - 1 {
-            j = ny - 1;
+            j = ny - 1
         }
         let idx = 3 * i + 3 * nx * j;
         let r = self.data[idx] as f32 / 255.0;

@@ -1,26 +1,26 @@
 use nalgebra::Vector3;
 
 pub struct Ray {
-    orig: Vector3<f32>,
-    dir: Vector3<f32>,
+    a: Vector3<f32>,
+    b: Vector3<f32>,
     time: f32,
 }
 
 impl Ray {
-    pub fn new(orig: Vector3<f32>, dir: Vector3<f32>, time: f32) -> Self {
-        Self { orig, dir, time }
+    pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Self {
+        Ray { a, b, time }
     }
 
     pub fn origin(&self) -> Vector3<f32> {
-        self.orig
+        self.a
     }
     pub fn direction(&self) -> Vector3<f32> {
-        self.dir
+        self.b
     }
     pub fn time(&self) -> f32 {
         self.time
     }
-    pub fn at(&self, t: f32) -> Vector3<f32> {
-        self.orig + t * self.dir
+    pub fn point_at_parameter(&self, t: f32) -> Vector3<f32> {
+        self.a + t * self.b
     }
 }

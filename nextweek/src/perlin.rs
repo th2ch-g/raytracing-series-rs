@@ -63,7 +63,7 @@ pub struct Perlin {
 
 impl Perlin {
     pub fn new() -> Self {
-        Self {
+        Perlin {
             ran_vec: perlin_generate(),
             perm_x: perlin_generate_perm(),
             perm_y: perlin_generate_perm(),
@@ -84,7 +84,7 @@ impl Perlin {
                 for dk in 0..2 {
                     c[di][dj][dk] = self.ran_vec[self.perm_x[(i + di) & 255]
                         ^ self.perm_y[(j + dj) & 255]
-                        ^ self.perm_z[(k + dk) & 255]];
+                        ^ self.perm_z[(k + dk) & 255]]
                 }
             }
         }

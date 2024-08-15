@@ -25,14 +25,14 @@ pub struct HittableList {
 
 impl HittableList {
     pub fn push(&mut self, hittable: impl Hittable + 'static) {
-        self.list.push(Box::new(hittable));
+        self.list.push(Box::new(hittable))
     }
 }
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let mut closest_so_far = t_max;
-        let mut hit_anything = None;
+        let mut hit_anything: Option<HitRecord> = None;
         for h in self.list.iter() {
             if let Some(hit) = h.hit(ray, t_min, closest_so_far) {
                 closest_so_far = hit.t;
@@ -44,14 +44,14 @@ impl Hittable for HittableList {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         match self.list.first() {
-            Some(first) => match first.bounding_box(t0, t1) {
-                Some(bbox) => self.list.iter().skip(1).try_fold(bbox, |acc, hitable| {
-                    hitable
-                        .bounding_box(t0, t1)
-                        .map(|bbox| aabb::surrounding_box(&acc, &bbox))
-                }),
-                _ => None,
-            },
+            Some(first) => {
+                match first.bounding_box(t0, t1) {
+                    Some(bbox) => self.list.iter().skip(1).try_fold(bbox, |acc, hittable| {
+                        hittable.bounding_box(t0, t1).map(|bbox| aabb::surrounding_box(&acc, &bbox))
+                    }),
+                    _ => None,
+                }
+            }
             _ => None,
         }
     }
@@ -63,7 +63,7 @@ pub struct FlipNormals<H: Hittable> {
 
 impl<H: Hittable> FlipNormals<H> {
     pub fn new(hittable: H) -> Self {
-        Self { hittable }
+        FlipNormals { hittable }
     }
 }
 

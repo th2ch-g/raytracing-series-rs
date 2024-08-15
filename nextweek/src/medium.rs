@@ -15,7 +15,7 @@ pub struct ConstantMedium<H: Hittable, T: Texture> {
 
 impl<H: Hittable, T: Texture> ConstantMedium<H, T> {
     pub fn new(boundary: H, density: f32, texture: T) -> Self {
-        Self {
+        ConstantMedium {
             boundary,
             density,
             phase_function: Isotropic::new(texture),
@@ -43,8 +43,8 @@ impl<H: Hittable, T: Texture> Hittable for ConstantMedium<H, T> {
                             t,
                             u: 0.0,
                             v: 0.0,
-                            p: ray.at(t),
-                            normal: Vector3::new(1.0, 0.0, 0.0),
+                            p: ray.point_at_parameter(t),
+                            normal: Vector3::new(1.0, 0.0, 0.0), // arbitrary
                             material: &self.phase_function,
                         });
                     }

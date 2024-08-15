@@ -16,21 +16,345 @@ mod translate;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::cube::Cube;
-use crate::hittable::{Hittable, HittableList};
+use crate::hittable::{FlipNormals, Hittable, HittableList};
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::medium::ConstantMedium;
 use crate::ray::Ray;
 use crate::rect::{AARect, Plane};
 use crate::rotate::{Axis, Rotate};
 use crate::sphere::{MovingSphere, Sphere};
-use crate::texture::{ConstantTexture, ImageTexture, NoiseTexture};
+use crate::texture::{CheckerTexture, ConstantTexture, ImageTexture, NoiseTexture};
 use crate::translate::Translate;
 use nalgebra::Vector3;
 use rand::Rng;
 use rayon::prelude::*;
 use std::f32;
 
-const MAX_DEPTH: i32 = 5000;
+#[allow(dead_code)]
+fn random_scene() -> Box<dyn Hittable> {
+    let mut rng = rand::thread_rng();
+    let origin = Vector3::new(4.0, 0.2, 0.0);
+    let mut world: Vec<Box<dyn Hittable>> = Vec::new();
+    let checker = CheckerTexture::new(
+        ConstantTexture::new(0.2, 0.3, 0.1),
+        ConstantTexture::new(0.9, 0.9, 0.9),
+    );
+    world.push(Box::new(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new(checker),
+    )));
+    for a in -10..10 {
+        for b in -10..10 {
+            let choose_material = rng.gen::<f32>();
+            let center = Vector3::new(
+                a as f32 + 0.9 * rng.gen::<f32>(),
+                0.2,
+                b as f32 + 0.9 * rng.gen::<f32>(),
+            );
+            if (center - origin).magnitude() > 0.9 {
+                if choose_material < 0.8 {
+                    // diffuse
+                    world.push(Box::new(MovingSphere::new(
+                        center,
+                        center + Vector3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),
+                        0.0,
+                        1.0,
+                        0.2,
+                        Lambertian::new(ConstantTexture::new(
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                        )),
+                    )));
+                } else if choose_material < 0.95 {
+                    // metal
+                    world.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Metal::new(
+                            Vector3::new(
+                                0.5 * (1.0 + rng.gen::<f32>()),
+                                0.5 * (1.0 + rng.gen::<f32>()),
+                                0.5 * (1.0 + rng.gen::<f32>()),
+                            ),
+                            0.5 * rng.gen::<f32>(),
+                        ),
+                    )));
+                } else {
+                    // glass
+                    world.push(Box::new(Sphere::new(center, 0.2, Dielectric::new(1.5))));
+                }
+            }
+        }
+    }
+    world.push(Box::new(Sphere::new(
+        Vector3::new(0.0, 1.0, 0.0),
+        1.0,
+        Dielectric::new(1.5),
+    )));
+    world.push(Box::new(Sphere::new(
+        Vector3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)),
+    )));
+    world.push(Box::new(Sphere::new(
+        Vector3::new(4.0, 1.0, 0.0),
+        1.0,
+        Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0),
+    )));
+    Box::new(BVH::new(world, 0.0, 1.0))
+}
+
+#[allow(dead_code)]
+fn two_spheres() -> Box<dyn Hittable> {
+    let checker = CheckerTexture::new(
+        ConstantTexture::new(0.2, 0.3, 0.1),
+        ConstantTexture::new(0.9, 0.9, 0.9),
+    );
+    let mut world = HittableList::default();
+    world.push(Sphere::new(
+        Vector3::new(0.0, -10.0, 0.0),
+        10.0,
+        Lambertian::new(checker.clone()),
+    ));
+    world.push(Sphere::new(
+        Vector3::new(0.0, 10.0, 0.0),
+        10.0,
+        Lambertian::new(checker),
+    ));
+    Box::new(world)
+}
+
+#[allow(dead_code)]
+fn two_perlin_spheres() -> Box<dyn Hittable> {
+    let noise = NoiseTexture::new(4.0);
+    let mut world = HittableList::default();
+    world.push(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new(noise.clone()),
+    ));
+    world.push(Sphere::new(
+        Vector3::new(0.0, 2.0, 0.0),
+        2.0,
+        Lambertian::new(noise),
+    ));
+    Box::new(world)
+}
+
+#[allow(dead_code)]
+fn earth() -> Box<dyn Hittable> {
+    let image = image::open("earthmap.png")
+        .expect("image not found")
+        .to_rgb8();
+    let (nx, ny) = image.dimensions();
+    let data = image.into_raw();
+    let texture = ImageTexture::new(data, nx, ny);
+    let earth = Sphere::new(Vector3::new(0.0, 0.0, 0.0), 2.0, Lambertian::new(texture));
+    Box::new(earth)
+}
+
+#[allow(dead_code)]
+fn simple_light() -> Box<dyn Hittable> {
+    let noise = NoiseTexture::new(4.0);
+    let mut world = HittableList::default();
+    world.push(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new(noise.clone()),
+    ));
+    world.push(Sphere::new(
+        Vector3::new(0.0, 2.0, 0.0),
+        2.0,
+        Lambertian::new(noise),
+    ));
+    world.push(Sphere::new(
+        Vector3::new(0.0, 7.0, 0.0),
+        2.0,
+        DiffuseLight::new(ConstantTexture::new(4.0, 4.0, 4.0)),
+    ));
+    world.push(AARect::new(
+        Plane::XY,
+        3.0,
+        5.0,
+        1.0,
+        3.0,
+        -2.0,
+        DiffuseLight::new(ConstantTexture::new(4.0, 4.0, 4.0)),
+    ));
+    Box::new(world)
+}
+
+#[allow(dead_code)]
+fn cornell_box() -> Box<dyn Hittable> {
+    let red = Lambertian::new(ConstantTexture::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(ConstantTexture::new(15.0, 15.0, 15.0));
+    let mut world = HittableList::default();
+    world.push(FlipNormals::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        green,
+    )));
+    world.push(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, red));
+    world.push(AARect::new(
+        Plane::ZX,
+        227.0,
+        332.0,
+        213.0,
+        343.0,
+        554.0,
+        light,
+    ));
+    world.push(FlipNormals::new(AARect::new(
+        Plane::ZX,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    world.push(AARect::new(
+        Plane::ZX,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        white.clone(),
+    ));
+    world.push(FlipNormals::new(AARect::new(
+        Plane::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    world.push(Translate::new(
+        Rotate::new(
+            Axis::Y,
+            Cube::new(
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::new(165.0, 165.0, 165.0),
+                white.clone(),
+            ),
+            -18.0,
+        ),
+        Vector3::new(130.0, 0.0, 65.0),
+    ));
+    world.push(Translate::new(
+        Rotate::new(
+            Axis::Y,
+            Cube::new(
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::new(165.0, 330.0, 165.0),
+                white,
+            ),
+            15.0,
+        ),
+        Vector3::new(265.0, 0.0, 295.0),
+    ));
+    Box::new(world)
+}
+
+#[allow(dead_code)]
+fn cornell_smoke() -> Box<dyn Hittable> {
+    let red = Lambertian::new(ConstantTexture::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(ConstantTexture::new(7.0, 7.0, 7.0));
+    let mut world = HittableList::default();
+    world.push(FlipNormals::new(AARect::new(
+        Plane::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        green,
+    )));
+    world.push(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, red));
+    world.push(AARect::new(
+        Plane::ZX,
+        127.0,
+        432.0,
+        113.0,
+        443.0,
+        554.0,
+        light,
+    ));
+    world.push(FlipNormals::new(AARect::new(
+        Plane::ZX,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    world.push(AARect::new(
+        Plane::ZX,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        white.clone(),
+    ));
+    world.push(FlipNormals::new(AARect::new(
+        Plane::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    let box1 = Translate::new(
+        Rotate::new(
+            Axis::Y,
+            Cube::new(
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::new(165.0, 165.0, 165.0),
+                white.clone(),
+            ),
+            -18.0,
+        ),
+        Vector3::new(130.0, 0.0, 65.0),
+    );
+    let box2 = Translate::new(
+        Rotate::new(
+            Axis::Y,
+            Cube::new(
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::new(165.0, 330.0, 165.0),
+                white,
+            ),
+            15.0,
+        ),
+        Vector3::new(265.0, 0.0, 295.0),
+    );
+    world.push(ConstantMedium::new(
+        box1,
+        0.01,
+        ConstantTexture::new(1.0, 1.0, 1.0),
+    ));
+    world.push(ConstantMedium::new(
+        box2,
+        0.01,
+        ConstantTexture::new(0.0, 0.0, 0.0),
+    ));
+    Box::new(world)
+}
 
 fn final_scene() -> Box<dyn Hittable> {
     let mut rng = rand::thread_rng();
@@ -46,7 +370,7 @@ fn final_scene() -> Box<dyn Hittable> {
             let z0 = -1000.0 + j as f32 * w;
             let y0 = 0.0;
             let x1 = x0 + w;
-            let y1 = 100.0 + (rng.gen::<f32>() + 0.01);
+            let y1 = 100.0 * (rng.gen::<f32>() + 0.01);
             let z1 = z0 + w;
             box_list1.push(Box::new(Cube::new(
                 Vector3::new(x0, y0, z0),
@@ -141,7 +465,7 @@ fn final_scene() -> Box<dyn Hittable> {
 fn color(ray: &Ray, world: &Box<dyn Hittable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
         let emitted = hit.material.emitted(hit.u, hit.v, &hit.p);
-        if depth < MAX_DEPTH {
+        if depth < 50 {
             if let Some((scattered, attenuation)) = hit.material.scatter(ray, &hit) {
                 return emitted
                     + attenuation.zip_map(&color(&scattered, world, depth + 1), |l, r| l * r);

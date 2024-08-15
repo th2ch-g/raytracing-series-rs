@@ -23,7 +23,7 @@ pub struct Sphere<M: Material> {
 
 impl<M: Material> Sphere<M> {
     pub fn new(center: Vector3<f32>, radius: f32, material: M) -> Self {
-        Self {
+        Sphere {
             center,
             radius,
             material,
@@ -38,11 +38,11 @@ impl<M: Material> Hittable for Sphere<M> {
         let b = oc.dot(&ray.direction());
         let c = oc.dot(&oc) - self.radius.powi(2);
         let discriminant = b.powi(2) - a * c;
-        if discriminant > 0. {
+        if discriminant > 0.0 {
             let sqrt_discriminant = discriminant.sqrt();
             let t = (-b - sqrt_discriminant) / a;
             if t < t_max && t > t_min {
-                let p = ray.at(t);
+                let p = ray.point_at_parameter(t);
                 let normal = (p - self.center) / self.radius;
                 let (u, v) = get_sphere_uv(&normal);
                 return Some(HitRecord {
@@ -56,7 +56,7 @@ impl<M: Material> Hittable for Sphere<M> {
             }
             let t = (-b + sqrt_discriminant) / a;
             if t < t_max && t > t_min {
-                let p = ray.at(t);
+                let p = ray.point_at_parameter(t);
                 let normal = (p - self.center) / self.radius;
                 let (u, v) = get_sphere_uv(&normal);
                 return Some(HitRecord {
@@ -72,7 +72,7 @@ impl<M: Material> Hittable for Sphere<M> {
         None
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         let radius = Vector3::new(self.radius, self.radius, self.radius);
         let min = self.center - radius;
         let max = self.center + radius;
@@ -98,7 +98,7 @@ impl<M: Material> MovingSphere<M> {
         radius: f32,
         material: M,
     ) -> Self {
-        Self {
+        MovingSphere {
             center0,
             center1,
             time0,
@@ -122,11 +122,11 @@ impl<M: Material> Hittable for MovingSphere<M> {
         let b = oc.dot(&ray.direction());
         let c = oc.dot(&oc) - self.radius.powi(2);
         let discriminant = b.powi(2) - a * c;
-        if discriminant > 0. {
+        if discriminant > 0.0 {
             let sqrt_discriminant = discriminant.sqrt();
             let t = (-b - sqrt_discriminant) / a;
             if t < t_max && t > t_min {
-                let p = ray.at(t);
+                let p = ray.point_at_parameter(t);
                 let normal = (p - center) / self.radius;
                 let (u, v) = get_sphere_uv(&normal);
                 return Some(HitRecord {
@@ -140,7 +140,7 @@ impl<M: Material> Hittable for MovingSphere<M> {
             }
             let t = (-b + sqrt_discriminant) / a;
             if t < t_max && t > t_min {
-                let p = ray.at(t);
+                let p = ray.point_at_parameter(t);
                 let normal = (p - center) / self.radius;
                 let (u, v) = get_sphere_uv(&normal);
                 return Some(HitRecord {

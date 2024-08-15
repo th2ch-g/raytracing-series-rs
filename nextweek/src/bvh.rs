@@ -30,7 +30,7 @@ impl BVH {
                     let bc = b.min[axis] + b.max[axis];
                     ac.partial_cmp(&bc).unwrap()
                 } else {
-                    panic!("no bounding box in bvh node")
+                    panic!["no bounding box in bvh node"]
                 }
             }
         }
@@ -64,7 +64,7 @@ impl BVH {
         hittable.sort_unstable_by(box_compare(time0, time1, axis));
         let len = hittable.len();
         match len {
-            0 => panic!("no elements in scene"),
+            0 => panic!["no elements in scene"],
             1 => {
                 let leaf = hittable.pop().unwrap();
                 if let Some(bbox) = leaf.bounding_box(time0, time1) {
@@ -73,7 +73,7 @@ impl BVH {
                         bbox,
                     }
                 } else {
-                    panic!("no bounding box in bvh node");
+                    panic!["no bounding box in bvh node"]
                 }
             }
             _ => {
@@ -100,8 +100,8 @@ impl Hittable for BVH {
                 BVHNode::Branch { left, right } => {
                     let left = left.hit(ray, t_min, t_max);
                     if let Some(l) = &left {
-                        t_max = l.t;
-                    }
+                        t_max = l.t
+                    };
                     let right = right.hit(ray, t_min, t_max);
                     if right.is_some() {
                         right

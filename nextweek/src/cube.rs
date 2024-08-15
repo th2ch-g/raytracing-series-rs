@@ -72,7 +72,7 @@ impl Cube {
             p_min.x,
             material,
         )));
-        Self {
+        Cube {
             p_min,
             p_max,
             sides,
@@ -84,6 +84,7 @@ impl Hittable for Cube {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         self.sides.hit(ray, t_min, t_max)
     }
+
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(AABB {
             min: self.p_min,
